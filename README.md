@@ -20,13 +20,11 @@ Charts are created using the [rCharts library](https://ramnathv.github.io/rChart
 
 ![](https://arianeaumaitre.files.wordpress.com/2019/06/captura.png?w=662)
 
-### A short tutorial on how the app was built
-
-**Basic syntax of a Shiny app**
+### Basic syntax of a Shiny app
 
 Any Shiny app is built using two elements: an user interface and a server, that are then both run using
-the **shinyApp()** function. If you're using RStudio, you can start building your app by doing **new file -> Shyny Web App**.
-It's up to you whether you want to have your app in one or two R files, just remember to add the **shinyApp()** line at the end of 
+the `shinyApp()` function. If you're using RStudio, you can start building your app by doing **new file -> Shyny Web App**.
+It's up to you whether you want to have your app in one or two R files, just remember to add the `shinyApp()` line at the end of 
 your script if you're using a single file (you'll see that I'm using two files for my app - I find it simpler). 
 
 In a nutshell, the **user interface** is the part of your code where the inputs (i.e. the elements to be personalized) are defined, 
@@ -37,35 +35,35 @@ In our Eurostat app, you can see that the ui file contains all features related 
 as well as the information stating that the app will have three tabs, their names and layouts. The server file relates the app inputs with 
 our data and defines how the plots are to look like.
 
-**The user interface**
+### The user interface
 
 You can find the user interface code in the ui.R file. The code is all annotated, but these are some elements you may want
 to keep in mind if trying to replicate or to edit with your own data.
 
-* **fluidPage()** is the function that we'll be using to create our ui. It will define how the app will look like. 
+* `fluidPage()` is the function that we'll be using to create our ui. It will define how the app will look like. 
 
-* As I wanted to have three apps in my app, I'm using **tabsetPanel** with **type = "tabs"**. Within this function,
-each call to **tabPanel()** specifies the layout within each tab. You'll see that the elements of the side bar change for every
-tab as I wanted them to be different, that's why **sidebarPanel** is located within **tabPanel** and not outside. 
+* As I wanted to have three apps in my app, I'm using `tabsetPanel` with `type = "tabs"`. Within this function,
+each call to `tabPanel()` specifies the layout within each tab. You'll see that the elements of the side bar change for every
+tab as I wanted them to be different, that's why `sidebarPanel` is located within `tabPanel` and not outside. 
 
-* **sidebarPanel()** creates the side bar where the user will be selecting the different inputs. Here, each call to **selectInput**
-refers to a different element (countries,a ge, sex...). Within this function, we always need to specify an **inputId** - the way
-we will call this element throughout the code, a **label** - the name to be shown in the app, the **choices** that the input can take
-and the **selected** choice by default. Other arguments can be added, such as **multiple**, that allows to select different options
+* `sidebarPanel()` creates the side bar where the user will be selecting the different inputs. Here, each call to `selectInput`
+refers to a different element (countries,a ge, sex...). Within this function, we always need to specify an `inputId` - the way
+we will call this element throughout the code, a `label` - the name to be shown in the app, the `choices` that the input can take
+and the `selected` choice by default. Other arguments can be added, such as `multiple`, that allows to select different options
 from the choices at the same time.
 
-* In addition to several **selectInput()**, you'll notice that the side bar also includes a call to **sliderInput()**,
-that allows to choose the year range that we want to see in the x-axis. The function works in a pretty similar way to **selectInput()**.
+* In addition to several `selectInput()`, you'll notice that the side bar also includes a call to `sliderInput()`,
+that allows to choose the year range that we want to see in the x-axis. The function works in a pretty similar way to `selectInput()`.
 
 * After defining the side bar, we need to tell R what to show in the body of the app. This is done with the 
-**mainPanel(showOutput(“lines”, “highcharts”))** call, where **mainPanel()** states that we're now designing the body of the app
-and **showOutput** that this section will show an output to be defined in the server. **"lines"** is the name that we will be using
-to refer to this output, and **"highcharts"** the type of output to be produced.
+`mainPanel(showOutput(“lines”, “highcharts”))` call, where `mainPanel()` states that we're now designing the body of the app
+and `showOutput` that this section will show an output to be defined in the server. `"lines"` is the name that we will be using
+to refer to this output, and `"highcharts"` the type of output to be produced.
 
 * The rest of the code follows the exact same logic to create the bar plots tab. Since the last tab includes only text with 
-the app information, it is directly defined within the **tabPanel() call.**
+the app information, it is directly defined within the `tabPanel()` call.
 
-````{r}
+```r
 
 #Creating the user interface
 fluidPage(
@@ -137,27 +135,27 @@ fluidPage(
                        )
               
   ))
-````
+```
 
-**The Server**
+### The Server
 
 Remember the names that we were giving to the inputs and outputs? Now is when we're going to use them. Within the server,
 we will create a function defining exactly what is to be showed there where we indicated an output in the ui. We will also 
 specify the relationship between outputs and inputs.
 
-* We start with **output$lines <- renderChart2({** , that signals that we will be using our output called "lines" and
-that we will be creating a plot (**renderChart2** is used for creating **rCharts** objects).
+* We start with `output$lines <- renderChart2({` , that signals that we will be using our output called "lines" and
+that we will be creating a plot (`renderChart2` is used for creating `rCharts` objects).
 
-* Within **renderChart2**, I first allocate names to _all selected inputs_, making sure that we now have an object for each
-of the selections made in the side bar. Once this is done, I create a dataframe (**lines_data**) that subsets the original data in function
+* Within `renderChart2`, I first allocate names to _all selected inputs_, making sure that we now have an object for each
+of the selections made in the side bar. Once this is done, I create a dataframe (`lines_data`) that subsets the original data in function
 of all these objects --> this allows R to know which data to show in the final plot, at the same time that it matches inputs 
 and outputs.
 
-* Once the data frame has been defined, I create the **h1** plot object giving it the values I want to be showed.
+* Once the data frame has been defined, I create the `h1` plot object giving it the values I want to be showed.
 
 * The process for the bar plot is exactly the same
 
-````{r]
+```r
 
 function(input, output) {
   #First, the lines chart
@@ -213,9 +211,9 @@ function(input, output) {
   }))
   
 }
-````
+```
 
-**And now what??**
+### And now what??
 
 We're done! If you're using RStudio, all you have to do is click **'Run App'** and let the magic happen. If you want
 to deploy your app, you can do it directly from [Shiny](https://www.shinyapps.io/) - just remember that you need to
