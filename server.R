@@ -1,7 +1,7 @@
 #libraries
 library(shiny)
 library(tidyverse)
-library(rCharts)
+library(plotly)
 library(rsconnect)
 
 #data
@@ -11,7 +11,7 @@ load("eurostat.RData")
 
 function(input, output) {
   #First, the lines chart
-  output$lines <- renderChart2({
+  output$lines <- renderPlotly({
     #The "Selected" variables will serve to subset out data in function of
     # the input: they are a way of storing the input selected
     GEOSelected = input$geo
@@ -31,17 +31,18 @@ function(input, output) {
     )
     
     #And with this the  plot is created
-    h1 <- hPlot(x = "Year", y = "Value", 
-                group = "Country",
-                data = lines_data,
-                type = 'line')
-    h1$title(text = INDSelected) #Changes title in function of the indicator
-    return(h1)
+    h1 <- lines_data%>%
+      ggplot(aes(x = Year, y = Value, group = Country))+
+      geom_line(color = "dodgerblue")+
+      labs(title = INDSelected)+
+      theme_minimal()
+    
+    ggplotly(h1)
   }
   )
   
   #Same process for the bar chart:
-  output$bars <- renderChart2(({
+  output$bars <- renderPlotly(({
     IBSelected = input$ind_b
     YBSelected = input$years_b
     AGEBSelected = input$age_b
@@ -54,11 +55,13 @@ function(input, output) {
                           age_groups == AGEBSelected &
                           sex == SEXBSelected)
     
-    h2 <- hPlot(Value ~ Country, 
-                data = bars_data,
-                type = 'column')
-    h2$title(text = IBSelected)
-    return(h2)
+    h2 <- bars_data%>%
+      ggplot(aes(x = reorder(Country, Value), y = Value))+
+      geom_bar(stat = "identity", fill = "dodgerblue")+
+      labs(title = IBSelected)
+      theme_minimal()
+    
+    ggplotly(h2)
     
   }))
   

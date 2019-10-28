@@ -1,7 +1,8 @@
 #Libraries needed
 library(shiny)
+library(tidyverse)
 library(rsconnect)
-library(rCharts)
+library(plotly)
 
 #Data to be used
 load("eurostat.RData")
@@ -24,7 +25,7 @@ fluidPage(
                                        selected = levels(eurostat$Country)[1],
                                        multiple = TRUE), #allowing multiple country selection
                            selectInput(inputId = "ind",
-                                       label = "Select indicator",
+                                       label = "Select indicator:",
                                        choices = levels(eurostat$ind),
                                        selected = levels(eurostat$ind)[1]),
                            selectInput(inputId = "age",
@@ -41,7 +42,7 @@ fluidPage(
                                        value = c(1995, 2018),
                                        step = 5)),
                          #The main panel of the tab will show the lines plot
-                         mainPanel(showOutput("lines", "highcharts")))),
+                         mainPanel(plotlyOutput("lines")))),
               #Same process for the next tab: bar plots 
               #(some changes made to the options in the side panel)
               tabPanel("Bar plots",
@@ -62,7 +63,7 @@ fluidPage(
                                                    label = "Sex",
                                                    choices = levels(eurostat$sex),
                                                    selected = "Total")),
-                         mainPanel(showOutput("bars", "highcharts")))),
+                         mainPanel(plotlyOutput("bars")))),
               #Panel with information about the app:
               tabPanel("About", 
                        p(HTML("This is a Shiny Application built to plot statistics on income and living conditions from Eurostat.")),
