@@ -3,14 +3,22 @@ library(shiny)
 library(tidyverse)
 library(rsconnect)
 library(plotly)
+library(htmltools)
 
 #Data to be used
 load("eurostat.RData")
 
+
 #Creating the user interface
 fluidPage(
+  tags$head(tags$style(HTML(".col-sm-4 { width: 25%;}
+                    .col-sm-8 { width: 75%;}")),
+            tags$title("Plotting Eurostat statistics on income and living conditions")),
+
+  
   # Application title
-  headerPanel("Plotting Eurostat statistics on income and living conditions"),
+  headerPanel(HTML("<b><center>Plotting Eurostat statistics on income and living conditions</b></center></br>")),
+  
   
   #Giving a tabset appearance to the app
   tabsetPanel(type = "tabs",
@@ -27,7 +35,7 @@ fluidPage(
                            selectInput(inputId = "ind",
                                        label = "Select indicator:",
                                        choices = levels(eurostat$ind),
-                                       selected = levels(eurostat$ind)[1]),
+                                       selected = levels(eurostat$ind)[5]),
                            selectInput(inputId = "age",
                                        label = "Age groups:",
                                        choices = levels(eurostat$age_groups),
@@ -54,7 +62,7 @@ fluidPage(
                                        selectInput(inputId = "ind_b",
                                                    label = "Indicator",
                                                    choices = levels(eurostat$ind),
-                                                   selected = levels(eurostat$ind)[1]),
+                                                   selected = levels(eurostat$ind)[5]),
                                        selectInput(inputId = "age_b",
                                                    label = "Age groups",
                                                    choices = levels(eurostat$age_groups),
@@ -72,7 +80,7 @@ fluidPage(
                        p(HTML("Passing the mouse over the chart gives the exact values of the indicators by country and year.")),
                        p(HTML("Code for the app is available on Github")),
                        p(HTML("Data comes from Eurostat and has been retrieved using the eurostat package in R")),
-                       p(HTML("Plots are generated using RCharts, but you can expect a ggplot version coming soon"))
+                       p(HTML("Plots are generated using ggplot2 and ggplotly."))
                        )
               
   ))
