@@ -3,7 +3,7 @@ _Ariane Aumaitre, 16 June 2019_
 
 
 This repository contains a shiny app developed to plot Eurostat statistics on income and living conditions. 
-The running app can be found in <https://aaumaitre.shinyapps.io/Eurostat_dataviz/> . All data come from Eurostat 
+The running app can be found in <https://aaumaitre.shinyapps.io/Eurostat/> . All data come from Eurostat 
 and have been retrieved by using the Eurostat R library. More information about the data can be found 
 [here](https://ec.europa.eu/eurostat/web/income-and-living-conditions/data/database). The dataset used for the app 
 contains information on 34 countries for as long as there has been availability on the indicator. 
@@ -16,9 +16,9 @@ This repo contains one file for the data and two for the source code:
 * server.R generates the desired output
 
 The first tab of the app generates line charts across time, while the second one creates static barplots. 
-Charts are created using the [rCharts library](https://ramnathv.github.io/rCharts/). 
+Charts are created using `ggplot2` and `plotly` for R. 
 
-![](https://arianeaumaitre.files.wordpress.com/2019/06/captura.png?w=662)
+![](https://i.ibb.co/dG54S08/image.png)
 
 ### Basic syntax of a Shiny app
 
@@ -56,19 +56,40 @@ from the choices at the same time.
 that allows to choose the year range that we want to see in the x-axis. The function works in a pretty similar way to `selectInput()`.
 
 * After defining the side bar, we need to tell R what to show in the body of the app. This is done with the 
-`mainPanel(showOutput(“lines”, “highcharts”))` call, where `mainPanel()` states that we're now designing the body of the app
-and `showOutput` that this section will show an output to be defined in the server. `"lines"` is the name that we will be using
-to refer to this output, and `"highcharts"` the type of output to be produced.
+`mainPanel(plotlyOutput("lines"))` call, where `mainPanel()` states that we're now designing the body of the app
+and `plotlyOutput` that this section will show an plotly to be defined in the server. `"lines"` is the name that we will be using
+to refer to this output.
 
 * The rest of the code follows the exact same logic to create the bar plots tab. Since the last tab includes only text with 
 the app information, it is directly defined within the `tabPanel()` call.
 
 ```r
+#Libraries needed
+library(shiny)
+library(tidyverse)
+library(rsconnect)
+library(plotly)
+
+#Data to be used
+load("eurostat.RData")
+
 
 #Creating the user interface
 fluidPage(
+  #This line allows the app to show properly on mobile devices:
+  HTML('<meta name="viewport" content="width=1024">'),
+  
+  #Setting the relative size of the sidebar and the plot area:
+  tags$head(tags$style(HTML(".col-sm-4 { width: 25%;}
+                    .col-sm-8 { width: 75%;}")),
+            #Title to be shown @ browser (to get rid of html tags)
+            tags$title("Plotting Eurostat statistics on income and living conditions")),
+
+  
   # Application title
-  headerPanel("Plotting Eurostat statistics on income and living conditions"),
+  headerPanel(HTML("<b><center>Plotting Eurostat statistics on income and living conditions</b></center></br>")),
+  
+
   
   #Giving a tabset appearance to the app
   tabsetPanel(type = "tabs",
@@ -83,9 +104,9 @@ fluidPage(
                                        selected = levels(eurostat$Country)[1],
                                        multiple = TRUE), #allowing multiple country selection
                            selectInput(inputId = "ind",
-                                       label = "Select indicator",
+                                       label = "Select indicator:",
                                        choices = levels(eurostat$ind),
-                                       selected = levels(eurostat$ind)[1]),
+                                       selected = levels(eurostat$ind)[5]),
                            selectInput(inputId = "age",
                                        label = "Age groups:",
                                        choices = levels(eurostat$age_groups),
@@ -99,8 +120,8 @@ fluidPage(
                                        min(eurostat$Year), max(eurostat$Year),
                                        value = c(1995, 2018),
                                        step = 5)),
-                         #The main panel of the tab will show the lines plot
-                         mainPanel(showOutput("lines", "highcharts")))),
+                         #The main panel of the tab will show the lines plot(ly)
+                         mainPanel(plotlyOutput("lines")))),
               #Same process for the next tab: bar plots 
               #(some changes made to the options in the side panel)
               tabPanel("Bar plots",
@@ -112,7 +133,7 @@ fluidPage(
                                        selectInput(inputId = "ind_b",
                                                    label = "Indicator",
                                                    choices = levels(eurostat$ind),
-                                                   selected = levels(eurostat$ind)[1]),
+                                                   selected = levels(eurostat$ind)[5]),
                                        selectInput(inputId = "age_b",
                                                    label = "Age groups",
                                                    choices = levels(eurostat$age_groups),
@@ -121,17 +142,17 @@ fluidPage(
                                                    label = "Sex",
                                                    choices = levels(eurostat$sex),
                                                    selected = "Total")),
-                         mainPanel(showOutput("bars", "highcharts")))),
+                         mainPanel(plotlyOutput("bars")))),
               #Panel with information about the app:
               tabPanel("About", 
-                       p(HTML("")),
                        p(HTML("This is a Shiny Application built to plot statistics on income and living conditions from Eurostat.")),
                        p(HTML("It allows to either compare countries across time by using line charts, or to take more specific snapshots of a moment in time by comparing the 34 countries available.")),
                        p(HTML("You can browse through different indicators and look at their values while specifying sex ang age groups.")),
                        p(HTML("Passing the mouse over the chart gives the exact values of the indicators by country and year.")),
-                       p(HTML("Code for the app is available on <a href='https://github.com/aaumaitre/eurostat'>Github</a>.")),
+                       p(HTML("Code for the app is available on <a href= https://github.com/aaumaitre/eurostat/>Github</a>")),
                        p(HTML("Data comes from Eurostat and has been retrieved using the eurostat package in R")),
-                       p(HTML("Plots are generated using RCharts, but you can expect a ggplot version coming soon"))
+                       p(HTML("Plots are generated using ggplot2 and ggplotly.")),
+                       p(HTML("</br>For any questions or inquiries, you can find me at <a href=https://arianeaumaitre.com/> arianeaumaitre.com</a> or on <a href = https://twitter.com/ariamsita>Twitter</a>."))
                        )
               
   ))
@@ -143,23 +164,35 @@ Remember the names that we were giving to the inputs and outputs? Now is when we
 we will create a function defining exactly what is to be showed there where we indicated an output in the ui. We will also 
 specify the relationship between outputs and inputs.
 
-* We start with `output$lines <- renderChart2({` , that signals that we will be using our output called "lines" and
-that we will be creating a plot (`renderChart2` is used for creating `rCharts` objects).
+* We start with `output$lines <- renderPlotly({` , that signals that we will be using our output called "lines" and
+that we will be creating a plotly object  (in our case, combining `ggplot2` with the `ggplotly()` function.
 
-* Within `renderChart2`, I first allocate names to _all selected inputs_, making sure that we now have an object for each
-of the selections made in the side bar. Once this is done, I create a dataframe (`lines_data`) that subsets the original data in function
-of all these objects --> this allows R to know which data to show in the final plot, at the same time that it matches inputs 
+* Within `renderPlotly`, I first allocate names to _all selected inputs_, making sure that we now have an object for each
+of the selections made in the side bar. Once this is done, I create a dataframe (`lines_data`) that subsets the original data in function of all these objects --> this allows R to know which data to show in the final plot, at the same time that it matches inputs 
 and outputs.
 
-* Once the data frame has been defined, I create the `h1` plot object giving it the values I want to be showed.
+* Once the data frame has been defined, I create the `h1` plot object giving it the values I want to be showed and pass it to  `ggplotly()` including some aesthetic details.
 
 * The process for the bar plot is exactly the same
 
 ```r
 
+#libraries
+library(shiny)
+library(tidyverse)
+library(plotly)
+library(rsconnect)
+library(wesanderson)
+
+#data
+load("eurostat.RData")
+
+#Server function to define the output that will be shown in the app
+
 function(input, output) {
+
   #First, the lines chart
-  output$lines <- renderChart2({
+  output$lines <- renderPlotly({
     #The "Selected" variables will serve to subset out data in function of
     # the input: they are a way of storing the input selected
     GEOSelected = input$geo
@@ -169,27 +202,46 @@ function(input, output) {
     #To link the input selected with our dataframe, we subset our data
     #frame ("eurostat") with the values selected by the user and create
     #a data frame
-    lines_data <- subset(eurostat, 
-                        Country == GEOSelected & 
-                          ind == INDSelected &
-                          Year >= input$years[1] & 
-                          Year <= input$years[2] &
-                          age_groups == AGESelected &
-                          sex == SEXSelected
-    )
+    lines_data <- 
+      subset(eurostat, 
+             Country %in% GEOSelected & 
+               ind == INDSelected &
+               Year >= input$years[1] & 
+               Year <= input$years[2] &
+               age_groups == AGESelected &
+               sex == SEXSelected)
     
     #And with this the  plot is created
-    h1 <- hPlot(x = "Year", y = "Value", 
-                group = "Country",
-                data = lines_data,
-                type = 'line')
-    h1$title(text = INDSelected) #Changes title in function of the indicator
-    return(h1)
+    h1 <- lines_data%>%
+      ggplot(aes(x = Year, y = Value, color = Country))+
+      geom_line(size = 0.8)+
+      geom_point(size = 1.8)+
+      #The second argument in wes_palette makes values change depending on 
+      #the number of countries that are selected
+      scale_color_manual(values =rev(wes_palette("Darjeeling1", 
+                                                 length(unique(lines_data$Country)), 
+                                                 type = "continuous")))+
+      #bringing some air to the plot:
+      expand_limits(y = (max(lines_data$Value) + 0.05*max(lines_data$Value)))+
+      scale_x_continuous(breaks = seq(min(lines_data$Year), max(lines_data$Year), by = 2))+
+      labs(title = INDSelected,
+           x = NULL, y = NULL, color = NULL)+ 
+      theme_minimal()+
+      theme(panel.grid.major.y = element_line(color = "grey87"), 
+            panel.grid.major.x = element_blank(),
+            axis.line.x = element_line(color = "grey87"),
+            axis.ticks.x = element_line(color = "grey40"),
+            plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
+            axis.text.x = element_text(size = 10, color = "grey40"),
+            axis.text.y = element_text(size = 10, color = "grey40"))
+    
+    ggplotly(h1, width = 1200, height = 600)%>%
+      layout(legend = list(orientation = "h", x = 0.3, y =-0.1))
   }
   )
   
   #Same process for the bar chart:
-  output$bars <- renderChart2(({
+  output$bars <- renderPlotly(({
     IBSelected = input$ind_b
     YBSelected = input$years_b
     AGEBSelected = input$age_b
@@ -202,12 +254,23 @@ function(input, output) {
                           age_groups == AGEBSelected &
                           sex == SEXBSelected)
     
-    h2 <- hPlot(Value ~ Country, 
-                data = bars_data,
-                type = 'column')
-    h2$title(text = IBSelected)
-    return(h2)
+    h2 <- bars_data%>%
+      ggplot(aes(x = reorder(Country, Value), y = Value,
+                 text = paste0(Country, " ", Year,": ", Value)))+
+      geom_bar(stat = "identity", fill = "dodgerblue", width = 0.5)+
+      expand_limits(y = (max(bars_data$Value) + 0.05*max(bars_data$Value)))+
+      labs(title = IBSelected, y = NULL, x = NULL)+
+      theme_minimal()+ 
+      theme(panel.grid.major.y = element_line(color = "grey87"), 
+            panel.grid.major.x = element_blank(),
+            axis.line.x = element_line(color = "grey87"),
+            axis.ticks.x = element_line(color = "grey40"),
+            plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
+            axis.text.x = element_text(size = 10, color = "grey40", angle = 45),
+            axis.text.y = element_text(size = 10, color = "grey40"))
     
+    ggplotly(h2, tooltip = "text", width = 1200, height = 600)
+  
   }))
   
 }
